@@ -7,8 +7,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 const downloadAudio = async (url: string, output: string): Promise<string> => {
   return new Promise((resolve, reject) => {
-    const pythonExecutable = path.join(process.cwd(), "venv", "bin", "python3");
-    // const pythonExecutable = "python3";
+    // const pythonExecutable = path.join(process.cwd(), "venv", "bin", "python3");
+    const pythonExecutable = "python3";
     const scriptPath = path.join(process.cwd(), "download_audio.py");
     exec(
       `${pythonExecutable} ${scriptPath} ${url} ${output}`,

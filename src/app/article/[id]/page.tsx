@@ -68,7 +68,7 @@ const Article: React.FC<ArticleProps> = ({ params }) => {
             <h4>{article.description}</h4>
 
             <div className="d-flex flex-row-reverse">
-              {user && <LikeArticle id={id} likes={article.likes} />}
+              {user && <LikeArticle id={id} likes={article.likes || []} />}
               <div className="pe-2">
                 <p>{article.likes?.length}</p>
               </div>
