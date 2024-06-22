@@ -35,7 +35,9 @@ const GenerateArticles: React.FC = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `api/generatedArticle?url=${encodeURIComponent(url)}`
+        `https://ai-article-blog-nextjs.onrender.com/api/generatedArticle?url=${encodeURIComponent(
+          url
+        )}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch video data");
@@ -44,7 +46,9 @@ const GenerateArticles: React.FC = () => {
 
       // Fetch the image from your server
       const imageResponse = await fetch(
-        `api/fetchImage?url=${encodeURIComponent(data.thumbnailUrl)}`
+        `https://ai-article-blog-nextjs.onrender.com/api/fetchImage?url=${encodeURIComponent(
+          data.thumbnailUrl
+        )}`
       );
       if (!imageResponse.ok) {
         throw new Error("Failed to fetch thumbnail image");
