@@ -28,6 +28,7 @@ const DeleteArticle: React.FC<DeleteArticleProps> = ({ id, imageUrl }) => {
         className="fa fa-times"
         onClick={handleDelete}
         style={{ cursor: "pointer" }}
+        title="Delete article"
       />
     </div>
   );

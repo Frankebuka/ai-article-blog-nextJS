@@ -4,11 +4,16 @@ import { exec } from "child_process";
 import fs from "fs";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
+
+const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+
+const openai = new OpenAI({ apiKey });
 
 const downloadAudio = async (url: string, output: string): Promise<string> => {
   return new Promise((resolve, reject) => {
-    // const pythonExecutable = path.join(process.cwd(), "venv", "bin", "python3");
-    const pythonExecutable = "python3";
+    const pythonExecutable = path.join(process.cwd(), "venv", "bin", "python3");
+    // const pythonExecutable = "python3";
     const scriptPath = path.join(process.cwd(), "download_audio.py");
     exec(
       `${pythonExecutable} ${scriptPath} ${url} ${output}`,
@@ -108,7 +113,9 @@ export async function GET(req: NextRequest) {
 
     const output = path.join(process.cwd(), "audio.mp3");
     await downloadAudio(url, output);
+
     const audioUrl = await uploadToAssemblyAI(output);
+
     const transcription = await getTranscription(audioUrl);
 
     return NextResponse.json({
@@ -118,10 +125,8 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     if (error instanceof Error) {
-      console.error("Error:", error.message);
       return NextResponse.json({ error: error.message }, { status: 500 });
     } else {
-      console.error("Unexpected error:", error);
       return NextResponse.json(
         { error: "An unexpected error occurred" },
         { status: 500 }
@@ -136,3 +141,39 @@ const getVideoIdFromUrl = (url: string): string | null => {
   );
   return match ? match[1] : null;
 };
+
+export async function POST(req: NextRequest) {
+  const { description } = await req.json();
+
+  if (!description) {
+    return NextResponse.json(
+      { error: "Description is required" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const prompt = `Based on the following transcript from a YouTube video, write a comprehensive blog article, write it based on the transcript, but don't make it look like a youtube video, make it look like a proper blog article:\n\n${description}\n\nArticle:`;
+
+    const openaiResponse = await openai.completions.create({
+      model: "gpt-3.5-turbo-instruct",
+      prompt: prompt,
+      max_tokens: 500,
+      temperature: 0.7,
+      top_p: 1.0,
+    });
+
+    const article = openaiResponse.choices[0].text.trim();
+
+    return NextResponse.json({ article }, { status: 200 });
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    } else {
+      return NextResponse.json(
+        { error: "An unexpected error occurred" },
+        { status: 500 }
+      );
+    }
+  }
+}

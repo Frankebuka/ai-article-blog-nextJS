@@ -21,6 +21,7 @@ import Link from "next/link";
 
 const GenerateArticles: React.FC = () => {
   const [url, setUrl] = useState<string>("");
+  const [downloadAudio, setDownloadAudio] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const auth = getAuth(app);
   const [user] = useAuthState(auth) as [User | null, boolean, any];
@@ -35,9 +36,7 @@ const GenerateArticles: React.FC = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `https://ai-article-blog-nextjs.onrender.com/api/generatedArticle?url=${encodeURIComponent(
-          url
-        )}`
+        `api/generatedArticle?url=${encodeURIComponent(url)}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch video data");
@@ -46,9 +45,7 @@ const GenerateArticles: React.FC = () => {
 
       // Fetch the image from your server
       const imageResponse = await fetch(
-        `https://ai-article-blog-nextjs.onrender.com/api/fetchImage?url=${encodeURIComponent(
-          data.thumbnailUrl
-        )}`
+        `api/fetchImage?url=${encodeURIComponent(data.thumbnailUrl)}`
       );
       if (!imageResponse.ok) {
         throw new Error("Failed to fetch thumbnail image");
@@ -75,8 +72,18 @@ const GenerateArticles: React.FC = () => {
         comments: [],
       });
 
+      if (downloadAudio) {
+        const response = await fetch("api/downloadAudio");
+        const blob = await response.blob();
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "audio.mp3";
+        link.click();
+      }
+
       toast("Article added successfully", { type: "success" });
       setUrl("");
+      setDownloadAudio(false);
     } catch (error: any) {
       console.error("Error generating article:", error.message);
       toast("Failed to generate article", { type: "error" });
@@ -104,10 +111,25 @@ const GenerateArticles: React.FC = () => {
             type="url"
             name="link"
             placeholder="Place Youtube Link..."
-            className="form-control mb-4"
+            className="form-control mb-2"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
+            required
           />
+
+          {/* checkbox and message */}
+          <div className="d-flex align-items-center">
+            <input
+              type="checkbox"
+              id="downloadAudio"
+              className="me-2"
+              checked={downloadAudio}
+              onChange={(e) => setDownloadAudio(e.target.checked)}
+            />
+            <label htmlFor="downloadAudio" className="mb-0 small-text">
+              Check the box to download audio
+            </label>
+          </div>
 
           {/* button */}
           <button

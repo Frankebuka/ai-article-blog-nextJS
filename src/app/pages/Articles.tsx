@@ -1,5 +1,7 @@
 "use client";
 
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEllipsisV } from "@fortawesome/free-solid-svg-icons";
 import React, { useEffect, useState } from "react";
 import {
   getFirestore,
@@ -17,6 +19,7 @@ import Link from "next/link";
 import Image from "next/image";
 import DeleteArticle from "../components/DeleteArticle";
 import LikeArticle from "../components/LikeArticle";
+import { toast } from "react-toastify";
 
 interface Article {
   id: string;
@@ -32,6 +35,7 @@ interface Article {
 
 const Articles: React.FC = () => {
   const [articles, setArticles] = useState<Article[]>([]);
+  const [dropdownVisible, setDropdownVisible] = useState<string | null>(null);
 
   const db = getFirestore(app);
   const auth = getAuth(app);
@@ -51,6 +55,22 @@ const Articles: React.FC = () => {
       setArticles(articles);
     });
   }, [db]);
+
+  const toggleDropdown = (id: string) => {
+    setDropdownVisible(dropdownVisible === id ? null : id);
+  };
+
+  const copyToClipboard = (text: string) => {
+    setDropdownVisible(null);
+    navigator.clipboard.writeText(text).then(
+      () => {
+        toast("Copied", { type: "success" });
+      },
+      (err) => {
+        toast("Failed to copy text", { type: "error" });
+      }
+    );
+  };
 
   return (
     <div>
@@ -80,6 +100,7 @@ const Articles: React.FC = () => {
                       width={320}
                       height={180}
                       style={{ maxHeight: "180px", width: "100%" }}
+                      title="Click image to go to article page"
                     />
                   </Link>
                 </div>
@@ -100,21 +121,48 @@ const Articles: React.FC = () => {
                   <p>{createdAt.toDate().toDateString()}</p>
                   <h5 className="description">{description}</h5>
 
-                  <div className="d-flex justify-content-end">
+                  <div className="d-flex justify-content-end align-items-center">
                     {user && <LikeArticle id={id} likes={likes} />}
-                    <div className="pe-2 mr-3" style={{ marginLeft: "8px" }}>
+                    <div
+                      className="pe-2 mr-3 mt-3"
+                      style={{ marginLeft: "8px" }}
+                    >
                       <p>
                         {likes?.length} {likes.length > 1 ? "likes" : "like"}
                       </p>
                     </div>
                     {comments && comments.length > 0 && (
-                      <div className="pe-2">
+                      <div className="pe-2 mt-3">
                         <p>
                           {comments?.length}{" "}
                           {comments.length > 1 ? "comments" : "comment"}
                         </p>
                       </div>
                     )}
+                    <div className="dropdown">
+                      <FontAwesomeIcon
+                        icon={faEllipsisV}
+                        onClick={() => toggleDropdown(id)}
+                        style={{ cursor: "pointer" }}
+                        title="Click to copy title or description"
+                      />
+                      {dropdownVisible === id && (
+                        <div className="dropdown-menu show">
+                          <button
+                            className="dropdown-item"
+                            onClick={() => copyToClipboard(title)}
+                          >
+                            Title
+                          </button>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => copyToClipboard(description)}
+                          >
+                            Description
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

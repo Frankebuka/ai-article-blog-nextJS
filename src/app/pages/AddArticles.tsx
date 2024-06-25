@@ -23,18 +23,23 @@ import app from "../firebase";
 interface FormData {
   title: string;
   description: string;
+  askAI: string;
   image: File | string;
   createdAt: Date;
 }
 
 const AddArticles: React.FC = () => {
   const [loading, setLoading] = useState(false);
+  const [openAskAI, setOpenAskAI] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     title: "",
     description: "",
     image: "",
+    askAI: "",
     createdAt: Timestamp.now().toDate(),
   });
+
+  const { title, description, image, askAI, createdAt } = formData;
 
   const [progress, setProgress] = useState(0);
 
@@ -57,7 +62,7 @@ const AddArticles: React.FC = () => {
 
   const handlePublish = (e: FormEvent<HTMLButtonElement>): void => {
     e.preventDefault();
-    if (!formData.title || !formData.description || !formData.image) {
+    if (!title || !description || !image) {
       alert("please fill all the fields");
       return;
     }
@@ -66,55 +71,104 @@ const AddArticles: React.FC = () => {
 
     const storageRef = ref(
       storage,
-      `/images/${Date.now()}${(formData.image as File).name}`
+      `/images/${Date.now()}${(image as File).name}`
     );
 
-    const uploadImage = uploadBytesResumable(
-      storageRef,
-      formData.image as File
-    );
+    const uploadImage = uploadBytesResumable(storageRef, image as File);
 
-    uploadImage.on(
-      "state_changed",
-      (snapshot) => {
-        const progressPercent = Math.round(
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-        );
-        setProgress(progressPercent);
-      },
-      (err) => {
-        console.log(err);
-      },
-      () => {
-        setFormData({
-          title: "",
-          description: "",
-          image: "",
-          createdAt: Timestamp.now().toDate(),
-        });
-
-        getDownloadURL(uploadImage.snapshot.ref).then((url) => {
-          const articleRef = collection(db, "Articles");
-          addDoc(articleRef, {
-            title: formData.title,
-            description: formData.description,
-            imageUrl: url,
-            createdAt: Timestamp.now().toDate(),
-            createdBy: user?.displayName || "Anonymous",
-            userId: user?.uid || "Anonymous",
-            likes: [],
-            comments: [],
-          })
-            .then(() => {
-              toast("Article added successfully", { type: "success" });
-              setProgress(0);
+    if (!askAI) {
+      uploadImage.on(
+        "state_changed",
+        (snapshot) => {
+          const progressPercent = Math.round(
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          );
+          setProgress(progressPercent);
+        },
+        (err) => {
+          console.log(err);
+        },
+        () => {
+          getDownloadURL(uploadImage.snapshot.ref).then((url) => {
+            const articleRef = collection(db, "Articles");
+            addDoc(articleRef, {
+              title,
+              description,
+              imageUrl: url,
+              createdAt: Timestamp.now().toDate(),
+              createdBy: user?.displayName || "Anonymous",
+              userId: user?.uid || "Anonymous",
+              likes: [],
+              comments: [],
             })
-            .catch((err) => {
-              toast("Error adding article", { type: "error" });
-            });
-        });
-      }
-    );
+              .then(() => {
+                toast("Article added successfully", { type: "success" });
+                setProgress(0);
+              })
+              .catch((err) => {
+                toast("Error adding article", { type: "error" });
+              });
+          });
+        }
+      );
+    } else {
+      uploadImage.on(
+        "state_changed",
+        (snapshot) => {
+          const progressPercent = Math.round(
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          );
+          setProgress(progressPercent);
+        },
+        (err) => {
+          console.log(err);
+        },
+        async () => {
+          const res = await fetch("api/generatedArticle", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ description }),
+          });
+
+          // if (!res.ok) {
+          //   throw new Error("Failed to article");
+          // }
+
+          const data = await res.json();
+
+          getDownloadURL(uploadImage.snapshot.ref).then((url) => {
+            const articleRef = collection(db, "Articles");
+            addDoc(articleRef, {
+              title,
+              description: res.ok ? data : "Failed to generate article",
+              imageUrl: url,
+              createdAt: Timestamp.now().toDate(),
+              createdBy: user?.displayName || "Anonymous",
+              userId: user?.uid || "Anonymous",
+              likes: [],
+              comments: [],
+            })
+              .then(() => {
+                toast("Article added successfully", { type: "success" });
+                setProgress(0);
+              })
+              .catch((err) => {
+                toast("Error adding article", { type: "error" });
+              });
+          });
+        }
+      );
+    }
+
+    setFormData({
+      title: "",
+      description: "",
+      askAI: "",
+      image: "",
+      createdAt: Timestamp.now().toDate(),
+    });
     setLoading(false);
   };
 
@@ -128,17 +182,37 @@ const AddArticles: React.FC = () => {
             type="text"
             name="title"
             className="form-control"
-            value={formData.title}
+            value={title}
             onChange={handleChange}
+            required
           />
 
           <label htmlFor="description">Description</label>
           <textarea
             name="description"
             className="form-control"
-            value={formData.description}
+            value={description}
             onChange={handleChange}
+            required
           />
+
+          {openAskAI ? (
+            <input
+              type="text"
+              name="askAI"
+              className="form-control mt-2"
+              placeholder="e.g., summarize the description"
+              value={askAI}
+              onChange={handleChange}
+            />
+          ) : (
+            <button
+              className="form-control btn-primary mt-2"
+              onClick={() => setOpenAskAI(true)}
+            >
+              Ask AI
+            </button>
+          )}
 
           <label htmlFor="image">Image</label>
           <input
@@ -147,6 +221,7 @@ const AddArticles: React.FC = () => {
             accept="image/*"
             className="form-control"
             onChange={handleImageChange}
+            required
           />
 
           {progress === 0 ? null : (

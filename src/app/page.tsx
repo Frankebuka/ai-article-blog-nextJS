@@ -6,7 +6,10 @@ export default function Home() {
   return (
     <main className="container">
       <div className="row" style={{ marginTop: 70 }}>
-        <div className="col-md-8">
+        <div
+          className="col-md-8"
+          style={{ height: "100vh", overflowY: "auto" }}
+        >
           <Articles />
         </div>
         <div className="col-md-4">

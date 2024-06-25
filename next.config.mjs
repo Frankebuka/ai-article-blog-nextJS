@@ -14,6 +14,14 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: "/audio/:path*",
+        destination: "/public/audio/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;
