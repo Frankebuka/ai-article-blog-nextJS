@@ -124,17 +124,16 @@ const AddArticles: React.FC = () => {
           console.log(err);
         },
         async () => {
-          const res = await fetch("api/generatedArticle", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ description }),
-          });
-
-          // if (!res.ok) {
-          //   throw new Error("Failed to article");
-          // }
+          const res = await fetch(
+            "https://ai-article-blog-nextjs.onrender.com/api/generatedArticle",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ description }),
+            }
+          );
 
           const data = await res.json();
 
