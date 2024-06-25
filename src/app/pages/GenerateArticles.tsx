@@ -63,6 +63,21 @@ const GenerateArticles: React.FC = () => {
       // Get the download URL after the upload completes
       const imageUrl = await getDownloadURL(uploadTask.ref);
 
+      // Automatically download the audio file if downloadAudio is true
+      if (downloadAudio) {
+        const response = await fetch(
+          "https://ai-article-blog-nextjs.onrender.com/api/downloadAudio"
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch thumbnail image");
+        }
+        const blob = await response.blob();
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "audio.mp3";
+        link.click();
+      }
+
       // Add the article to Firestore
       const articleRef = collection(db, "Articles");
       await addDoc(articleRef, {
@@ -75,17 +90,6 @@ const GenerateArticles: React.FC = () => {
         likes: [],
         comments: [],
       });
-
-      if (downloadAudio) {
-        const response = await fetch(
-          "https://ai-article-blog-nextjs.onrender.com/api/downloadAudio"
-        );
-        const blob = await response.blob();
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "audio.mp3";
-        link.click();
-      }
 
       toast("Article added successfully", { type: "success" });
       setUrl("");
