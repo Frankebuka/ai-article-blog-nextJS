@@ -116,7 +116,7 @@ const GenerateArticles: React.FC = () => {
     const blob = await response.blob();
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "audio.mp3";
+    link.download = `audio_${timestamp}.mp3`;
     link.click();
   };
 
