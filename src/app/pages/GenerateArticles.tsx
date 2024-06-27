@@ -63,19 +63,22 @@ const GenerateArticles: React.FC = () => {
       // Get the download URL after the upload completes
       const imageUrl = await getDownloadURL(uploadTask.ref);
 
+      // // Automatically download the audio file if downloadAudio is true
+      // if (downloadAudio) {
+      //   const response = await fetch("api/downloadAudio");
+      //   if (!response.ok) {
+      //     throw new Error("Failed to fetch thumbnail image");
+      //   }
+      //   const blob = await response.blob();
+      //   const link = document.createElement("a");
+      //   link.href = URL.createObjectURL(blob);
+      //   link.download = "audio.mp3";
+      //   link.click();
+      // }
+
       // Automatically download the audio file if downloadAudio is true
       if (downloadAudio) {
-        const response = await fetch(
-          "https://ai-article-blog-nextjs.onrender.com/api/downloadAudio"
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch thumbnail image");
-        }
-        const blob = await response.blob();
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "audio.mp3";
-        link.click();
+        fetchNewAudio();
       }
 
       // Add the article to Firestore
@@ -100,6 +103,21 @@ const GenerateArticles: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchNewAudio = async () => {
+    const timestamp = new Date().getTime(); // Create a unique query parameter
+    const response = await fetch(
+      `https://ai-article-blog-nextjs.onrender.com/api/downloadAudio?t=${timestamp}`
+    );
+    if (!response.ok) {
+      throw new Error("Failed to fetch audio file");
+    }
+    const blob = await response.blob();
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "audio.mp3";
+    link.click();
   };
 
   return (
