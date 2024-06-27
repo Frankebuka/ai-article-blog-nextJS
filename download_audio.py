@@ -5,12 +5,16 @@ import os
 def download_audio(url, output):
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': output,
+        'outtmpl': output,  # Keep the extension out of the template
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }],
+        'outtmpl': {
+            'default': output.replace('.mp3', ''),  # Ensure .mp3 is not included in the template
+        },
+        'overwrite': True,  # Overwrite existing files
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:

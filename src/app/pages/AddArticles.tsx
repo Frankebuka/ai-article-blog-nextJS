@@ -141,7 +141,9 @@ const AddArticles: React.FC = () => {
             const articleRef = collection(db, "Articles");
             addDoc(articleRef, {
               title,
-              description: res.ok ? data : "Failed to generate article",
+              description: res.ok
+                ? data
+                : "Failed to generate article. (2 max limit reached, try again tomorrow)",
               imageUrl: url,
               createdAt: Timestamp.now().toDate(),
               createdBy: user?.displayName || "Anonymous",

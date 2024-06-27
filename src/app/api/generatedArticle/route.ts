@@ -112,6 +112,9 @@ export async function GET(req: NextRequest) {
     const thumbnailUrl = thumbnails.high.url;
 
     const output = path.join(process.cwd(), "audio.mp3");
+    if (fs.existsSync(output)) {
+      fs.unlinkSync(output); // Delete the previous file if it exists
+    }
     await downloadAudio(url, output);
 
     const audioUrl = await uploadToAssemblyAI(output);
