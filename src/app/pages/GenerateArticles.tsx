@@ -63,22 +63,22 @@ const GenerateArticles: React.FC = () => {
       // Get the download URL after the upload completes
       const imageUrl = await getDownloadURL(uploadTask.ref);
 
-      // // Automatically download the audio file if downloadAudio is true
-      // if (downloadAudio) {
-      //   const response = await fetch("api/downloadAudio");
-      //   if (!response.ok) {
-      //     throw new Error("Failed to fetch thumbnail image");
-      //   }
-      //   const blob = await response.blob();
-      //   const link = document.createElement("a");
-      //   link.href = URL.createObjectURL(blob);
-      //   link.download = "audio.mp3";
-      //   link.click();
-      // }
-
       // Automatically download the audio file if downloadAudio is true
       if (downloadAudio) {
-        fetchNewAudio();
+        const response = await fetch(
+          `https://ai-article-blog-nextjs.onrender.com/api/downloadAudio?url=${encodeURIComponent(
+            url
+          )}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch audio file");
+        }
+        const blob = await response.blob();
+        const timestamp = new Date().getTime();
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `audio_${timestamp}.mp3`;
+        link.click();
       }
 
       // Add the article to Firestore
@@ -104,47 +104,6 @@ const GenerateArticles: React.FC = () => {
       setLoading(false);
     }
   };
-
-  const fetchNewAudio = async () => {
-    const response = await fetch(
-      `https://ai-article-blog-nextjs.onrender.com/api/downloadAudio?url=${encodeURIComponent(
-        url
-      )}`
-    );
-    if (!response.ok) {
-      throw new Error("Failed to fetch audio file");
-    }
-    const blob = await response.blob();
-    console.log("Blob size:", blob.size);
-    console.log("Blob type:", blob.type);
-
-    // Create an audio element and play the blob
-    const audioUrl = URL.createObjectURL(blob);
-    const audio = new Audio(audioUrl);
-    audio.play();
-
-    // Optionally download the audio as well
-    const timestamp = new Date().getTime(); // Create a unique query parameter
-    const link = document.createElement("a");
-    link.href = audioUrl;
-    link.download = `audio_${timestamp}.mp3`; // Add timestamp to the downloaded filename
-    link.click();
-  };
-
-  // const fetchNewAudio = async () => {
-  //   const timestamp = new Date().getTime(); // Create a unique query parameter
-  //   const response = await fetch(
-  //     `https://ai-article-blog-nextjs.onrender.com/api/downloadAudio?t=${timestamp}`
-  //   );
-  //   if (!response.ok) {
-  //     throw new Error("Failed to fetch audio file");
-  //   }
-  //   const blob = await response.blob();
-  //   const link = document.createElement("a");
-  //   link.href = URL.createObjectURL(blob);
-  //   link.download = `audio_${timestamp}.mp3`;
-  //   link.click();
-  // };
 
   return (
     <div className="border p-3 mt-3 bg-light">

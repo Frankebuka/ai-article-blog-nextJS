@@ -64,7 +64,7 @@ const Articles: React.FC = () => {
     setDropdownVisible(null);
     navigator.clipboard.writeText(text).then(
       () => {
-        toast("Copied", { type: "success" });
+        toast("Copied to clipboard", { type: "success" });
       },
       (err) => {
         toast("Failed to copy text", { type: "error" });
