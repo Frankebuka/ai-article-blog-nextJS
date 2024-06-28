@@ -43,6 +43,7 @@ import { Readable } from "stream";
 export async function GET(req: NextRequest) {
   try {
     const output = path.join(process.cwd(), "audio.mp3");
+    console.log(output);
 
     if (!fs.existsSync(output)) {
       return NextResponse.json(

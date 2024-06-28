@@ -107,7 +107,9 @@ const GenerateArticles: React.FC = () => {
 
   const fetchNewAudio = async () => {
     const timestamp = new Date().getTime(); // Create a unique query parameter
-    const response = await fetch(`/api/downloadAudio?t=${timestamp}`);
+    const response = await fetch(
+      `https://ai-article-blog-nextjs.onrender.com/api/downloadAudio?t=${timestamp}`
+    );
     if (!response.ok) {
       throw new Error("Failed to fetch audio file");
     }

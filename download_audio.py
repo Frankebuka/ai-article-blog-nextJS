@@ -19,6 +19,7 @@ def download_audio(url, output):
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
+        print(f"Downloaded audio to {output}")
 
 if __name__ == "__main__":
     url = sys.argv[1]
@@ -26,6 +27,7 @@ if __name__ == "__main__":
 
     # Specify the full path to the output file
     output_path = os.path.abspath(output)
+    print(f"Output path: {output_path}")
 
     download_audio(url, output_path)
 
