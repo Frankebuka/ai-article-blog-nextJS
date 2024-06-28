@@ -106,9 +106,10 @@ const GenerateArticles: React.FC = () => {
   };
 
   const fetchNewAudio = async () => {
-    const timestamp = new Date().getTime(); // Create a unique query parameter
     const response = await fetch(
-      `https://ai-article-blog-nextjs.onrender.com/api/downloadAudio?t=${timestamp}`
+      `https://ai-article-blog-nextjs.onrender.com/api/downloadAudio?url=${encodeURIComponent(
+        url
+      )}`
     );
     if (!response.ok) {
       throw new Error("Failed to fetch audio file");
@@ -123,6 +124,7 @@ const GenerateArticles: React.FC = () => {
     audio.play();
 
     // Optionally download the audio as well
+    const timestamp = new Date().getTime(); // Create a unique query parameter
     const link = document.createElement("a");
     link.href = audioUrl;
     link.download = `audio_${timestamp}.mp3`; // Add timestamp to the downloaded filename

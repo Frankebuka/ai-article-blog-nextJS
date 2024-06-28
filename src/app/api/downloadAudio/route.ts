@@ -39,11 +39,43 @@ import fs from "fs";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { Readable } from "stream";
+import { exec } from "child_process";
+
+const downloadAudio = async (url: string, output: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    // const pythonExecutable = path.join(process.cwd(), "venv", "bin", "python3");
+    const pythonExecutable = "python3";
+    const scriptPath = path.join(process.cwd(), "download_audio.py");
+    exec(
+      `${pythonExecutable} ${scriptPath} ${url} ${output}`,
+      (error, stdout, stderr) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(output);
+        }
+      }
+    );
+  });
+};
 
 export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const url = searchParams.get("url");
+
+  if (!url) {
+    return NextResponse.json(
+      { error: "URL parameter is required" },
+      { status: 400 }
+    );
+  }
+
   try {
     const output = path.join(process.cwd(), "audio.mp3");
-    console.log(output);
+    if (fs.existsSync(output)) {
+      fs.unlinkSync(output); // Delete the previous file if it exists
+    }
+    await downloadAudio(url, output);
 
     if (!fs.existsSync(output)) {
       return NextResponse.json(
