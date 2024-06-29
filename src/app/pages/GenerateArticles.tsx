@@ -80,6 +80,7 @@ const GenerateArticles: React.FC = () => {
         link.href = URL.createObjectURL(blob);
         link.download = `audio_${timestamp}.mp3`;
         link.click();
+        setDownloadAudio(false);
       }
 
       if (downloadVideo) {
@@ -97,6 +98,7 @@ const GenerateArticles: React.FC = () => {
         link.href = URL.createObjectURL(blob);
         link.download = `video_${timestamp}.mp4`;
         link.click();
+        setDownloadVideo(false);
       }
 
       // Add the article to Firestore
@@ -114,8 +116,6 @@ const GenerateArticles: React.FC = () => {
 
       toast("Article added successfully", { type: "success" });
       setUrl("");
-      setDownloadAudio(false);
-      setDownloadVideo(false);
     } catch (error: any) {
       console.error("Error generating article:", error.message);
       toast("Failed to generate article", { type: "error" });
