@@ -8,6 +8,10 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { getAuth } from "firebase/auth";
 import Comment from "../../components/Comment";
 import Image from "next/image";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEllipsisV } from "@fortawesome/free-solid-svg-icons";
+import { toast } from "react-toastify";
+import { title } from "process";
 
 interface ArticleProps {
   params: {
@@ -30,6 +34,7 @@ interface ArticleData {
 const Article: React.FC<ArticleProps> = ({ params }) => {
   const { id } = params;
   const [article, setArticle] = useState<ArticleData | null>(null);
+  const [dropdownVisible, setDropdownVisible] = useState<string | null>(null);
 
   const db = getFirestore(app);
   const auth = getAuth(app);
@@ -42,6 +47,24 @@ const Article: React.FC<ArticleProps> = ({ params }) => {
     });
     return () => unsubscribe();
   }, [id, db]);
+
+  const toggleDropdown = (id: string) => {
+    setDropdownVisible(dropdownVisible === id ? null : id);
+  };
+
+  const copyToClipboard = (text: string) => {
+    setDropdownVisible(null);
+    navigator.clipboard.writeText(text).then(
+      () => {
+        toast(`Copied ${text == article?.title ? "title" : "description"}`, {
+          type: "success",
+        });
+      },
+      (err) => {
+        toast("Failed to copy text", { type: "error" });
+      }
+    );
+  };
 
   return (
     <div
@@ -68,6 +91,30 @@ const Article: React.FC<ArticleProps> = ({ params }) => {
             <h4>{article.description}</h4>
 
             <div className="d-flex flex-row-reverse">
+              <div className="dropdown ps-2">
+                <FontAwesomeIcon
+                  icon={faEllipsisV}
+                  onClick={() => toggleDropdown(article.id)}
+                  style={{ cursor: "pointer" }}
+                  title="Click to copy title or description"
+                />
+                {dropdownVisible === id && (
+                  <div className="dropdown-menu show">
+                    <button
+                      className="dropdown-item"
+                      onClick={() => copyToClipboard(article.title)}
+                    >
+                      Title
+                    </button>
+                    <button
+                      className="dropdown-item"
+                      onClick={() => copyToClipboard(article.description)}
+                    >
+                      Description
+                    </button>
+                  </div>
+                )}
+              </div>
               {user && <LikeArticle id={id} likes={article.likes || []} />}
               <div className="pe-2">
                 <p>{article.likes?.length}</p>
