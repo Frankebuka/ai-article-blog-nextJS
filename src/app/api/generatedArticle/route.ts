@@ -121,10 +121,6 @@ export async function GET(req: NextRequest) {
 
     const transcription = await getTranscription(audioUrl);
 
-    if (fs.existsSync(output)) {
-      fs.unlinkSync(output); // Delete the previous file if it exists
-    }
-
     return NextResponse.json({
       title,
       thumbnailUrl,

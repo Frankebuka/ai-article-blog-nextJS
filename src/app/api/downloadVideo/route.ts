@@ -43,10 +43,6 @@ export async function GET(req: NextRequest) {
     const fileStream = fs.createReadStream(output);
     const stream = new Readable().wrap(fileStream);
 
-    if (fs.existsSync(output)) {
-      fs.unlinkSync(output); // Delete the previous file if it exists
-    }
-
     const headers = {
       "Content-Type": "video/mp4",
       "Content-Disposition": `attachment; filename=${path.basename(output)}`,
