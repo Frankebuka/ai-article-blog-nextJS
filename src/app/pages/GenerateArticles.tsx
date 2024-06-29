@@ -22,6 +22,7 @@ import Link from "next/link";
 const GenerateArticles: React.FC = () => {
   const [url, setUrl] = useState<string>("");
   const [downloadAudio, setDownloadAudio] = useState<boolean>(false);
+  const [downloadVideo, setDownloadVideo] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const auth = getAuth(app);
   const [user] = useAuthState(auth) as [User | null, boolean, any];
@@ -81,6 +82,23 @@ const GenerateArticles: React.FC = () => {
         link.click();
       }
 
+      if (downloadVideo) {
+        const response = await fetch(
+          `https://ai-article-blog-nextjs.onrender.com/api/downloadVideo?url=${encodeURIComponent(
+            url
+          )}`
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch video file");
+        }
+        const blob = await response.blob();
+        const timestamp = new Date().getTime();
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `video_${timestamp}.mp4`;
+        link.click();
+      }
+
       // Add the article to Firestore
       const articleRef = collection(db, "Articles");
       await addDoc(articleRef, {
@@ -97,6 +115,7 @@ const GenerateArticles: React.FC = () => {
       toast("Article added successfully", { type: "success" });
       setUrl("");
       setDownloadAudio(false);
+      setDownloadVideo(false);
     } catch (error: any) {
       console.error("Error generating article:", error.message);
       toast("Failed to generate article", { type: "error" });
@@ -131,17 +150,31 @@ const GenerateArticles: React.FC = () => {
           />
 
           {/* checkbox and message */}
-          <div className="d-flex align-items-center">
-            <input
-              type="checkbox"
-              id="downloadAudio"
-              className="me-2"
-              checked={downloadAudio}
-              onChange={(e) => setDownloadAudio(e.target.checked)}
-            />
-            <label htmlFor="downloadAudio" className="mb-0 small-text">
-              Check the box to download audio
-            </label>
+          <div className="d-flex">
+            <div className="d-flex align-items-center me-4">
+              <input
+                type="checkbox"
+                id="downloadAudio"
+                className="me-2"
+                checked={downloadAudio}
+                onChange={(e) => setDownloadAudio(e.target.checked)}
+              />
+              <label htmlFor="downloadAudio" className="mb-0 small-text">
+                Download audio
+              </label>
+            </div>
+            <div className="d-flex align-items-center">
+              <input
+                type="checkbox"
+                id="downloadVideo"
+                className="me-2"
+                checked={downloadVideo}
+                onChange={(e) => setDownloadVideo(e.target.checked)}
+              />
+              <label htmlFor="downloadVideo" className="mb-0 small-text">
+                Download video
+              </label>
+            </div>
           </div>
 
           {/* button */}
