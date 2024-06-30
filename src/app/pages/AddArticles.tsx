@@ -147,7 +147,7 @@ const AddArticles: React.FC = () => {
 
           if (!res.ok) {
             toast(
-              "5 max limit reached, please try again tomorrow. (Or do not use AI generator for today)",
+              "5 max limit reached, please try again tomorrow. (Or do not use 'Ask AI' for today)",
               {
                 type: "error",
               }
