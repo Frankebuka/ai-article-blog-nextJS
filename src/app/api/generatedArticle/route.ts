@@ -5,6 +5,7 @@ import fs from "fs";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { checkRateLimit } from "@/app/middleware/checkRateLimit";
 
 const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
 
@@ -146,22 +147,46 @@ const getVideoIdFromUrl = (url: string): string | null => {
 };
 
 export async function POST(req: NextRequest) {
-  const { description } = await req.json();
+  const { description, askAI, userId } = await req.json();
 
-  if (!description) {
+  if (!description || !askAI) {
     return NextResponse.json(
-      { error: "Description is required" },
+      { error: "Input fields are required" },
       { status: 400 }
     );
   }
 
+  const canProceed = await checkRateLimit(userId);
+
+  if (!canProceed) {
+    return NextResponse.json(
+      {
+        error: "Too many requests, please try again tomorrow.",
+      },
+      { status: 429 }
+    );
+  }
+
   try {
-    const prompt = `Based on the following transcript from a YouTube video, write a comprehensive blog article, write it based on the transcript, but don't make it look like a youtube video, make it look like a proper blog article:\n\n${description}\n\nArticle:`;
+    const prompt = () => {
+      const normalizedAskAI = askAI.toLowerCase();
+
+      return normalizedAskAI == "summarize description" ||
+        normalizedAskAI == "summarise description" ||
+        normalizedAskAI == "summarize the description" ||
+        normalizedAskAI == "summarise the description" ||
+        normalizedAskAI == "summarized description" ||
+        normalizedAskAI == "summarised description" ||
+        normalizedAskAI == "summarized the description" ||
+        normalizedAskAI == "summarised the description"
+        ? `Based on the following transcript from a YouTube video, write a comprehensive blog article with good paragraph and spacing, write it based on the transcript, but don't make it look like a youtube video, make it look like a proper blog article:\n\n${description}\n\nArticle:`
+        : `${description}\n\n${askAI}`;
+    };
 
     const openaiResponse = await openai.completions.create({
       model: "gpt-3.5-turbo-instruct",
-      prompt: prompt,
-      max_tokens: 500,
+      prompt: prompt(),
+      max_tokens: 1000,
       temperature: 0.7,
       top_p: 1.0,
     });

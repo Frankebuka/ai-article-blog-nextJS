@@ -20,6 +20,7 @@ import Image from "next/image";
 import DeleteArticle from "../components/DeleteArticle";
 import LikeArticle from "../components/LikeArticle";
 import { toast } from "react-toastify";
+import DOMPurify from "dompurify";
 
 interface Article {
   id: string;
@@ -60,11 +61,11 @@ const Articles: React.FC = () => {
     setDropdownVisible(dropdownVisible === id ? null : id);
   };
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, type: string) => {
     setDropdownVisible(null);
     navigator.clipboard.writeText(text).then(
       () => {
-        toast("Copied to clipboard", { type: "success" });
+        toast(`Copied ${type}`, { type: "success" });
       },
       (err) => {
         toast("Failed to copy text", { type: "error" });
@@ -88,86 +89,94 @@ const Articles: React.FC = () => {
             userId,
             likes,
             comments,
-          }) => (
-            <div className="border mt-3 p-3 bg-light" key={id}>
-              <div className="row">
-                <div className="col-md-3 mb-3 mb-md-0">
-                  <Link href={`/article/${id}`}>
-                    <Image
-                      src={imageUrl}
-                      alt="title"
-                      className="img-fluid"
-                      width={320}
-                      height={180}
-                      style={{ maxHeight: "180px", width: "100%" }}
-                      title="Click image to go to article page"
-                    />
-                  </Link>
-                </div>
-                <div className="col-md-9 ps-md-3">
-                  <div className="row">
-                    <div className="col-6">
-                      {createdBy && (
-                        <span className="badge bg-primary">{createdBy}</span>
-                      )}
-                    </div>
-                    <div className="col-6 d-flex justify-content-end">
-                      {user && user.uid === userId && (
-                        <DeleteArticle id={id} imageUrl={imageUrl} />
-                      )}
-                    </div>
+          }) => {
+            const cleanDescription = DOMPurify.sanitize(description) as any;
+            return (
+              <div className="border mt-3 p-3 bg-light" key={id}>
+                <div className="row">
+                  <div className="col-md-3 mb-3 mb-md-0">
+                    <Link href={`/article/${id}`}>
+                      <Image
+                        src={imageUrl}
+                        alt="title"
+                        className="img-fluid"
+                        width={320}
+                        height={180}
+                        style={{ maxHeight: "180px", width: "100%" }}
+                        title="Click image to go to article page"
+                      />
+                    </Link>
                   </div>
-                  <h3 className="mt-3">{title}</h3>
-                  <p>{createdAt.toDate().toDateString()}</p>
-                  <h5 className="description">{description}</h5>
-
-                  <div className="d-flex justify-content-end align-items-center">
-                    {user && <LikeArticle id={id} likes={likes} />}
-                    <div
-                      className="pe-2 mr-3 mt-3"
-                      style={{ marginLeft: "8px" }}
-                    >
-                      <p>
-                        {likes?.length} {likes.length > 1 ? "likes" : "like"}
-                      </p>
+                  <div className="col-md-9 ps-md-3">
+                    <div className="row">
+                      <div className="col-6">
+                        {createdBy && (
+                          <span className="badge bg-primary">{createdBy}</span>
+                        )}
+                      </div>
+                      <div className="col-6 d-flex justify-content-end">
+                        {user && user.uid === userId && (
+                          <DeleteArticle id={id} imageUrl={imageUrl} />
+                        )}
+                      </div>
                     </div>
-                    {comments && comments.length > 0 && (
-                      <div className="pe-2 mt-3">
+                    <h3 className="mt-3">{title}</h3>
+                    <p>{createdAt.toDate().toDateString()}</p>
+                    <h5
+                      className="description"
+                      dangerouslySetInnerHTML={{ __html: cleanDescription }}
+                    />
+
+                    <div className="d-flex justify-content-end align-items-center">
+                      {user && <LikeArticle id={id} likes={likes} />}
+                      <div
+                        className="pe-2 mr-3 mt-3"
+                        style={{ marginLeft: "8px" }}
+                      >
                         <p>
-                          {comments?.length}{" "}
-                          {comments.length > 1 ? "comments" : "comment"}
+                          {likes?.length} {likes.length > 1 ? "likes" : "like"}
                         </p>
                       </div>
-                    )}
-                    <div className="dropdown">
-                      <FontAwesomeIcon
-                        icon={faEllipsisV}
-                        onClick={() => toggleDropdown(id)}
-                        style={{ cursor: "pointer" }}
-                        title="Click to copy title or description"
-                      />
-                      {dropdownVisible === id && (
-                        <div className="dropdown-menu show">
-                          <button
-                            className="dropdown-item"
-                            onClick={() => copyToClipboard(title)}
-                          >
-                            Title
-                          </button>
-                          <button
-                            className="dropdown-item"
-                            onClick={() => copyToClipboard(description)}
-                          >
-                            Description
-                          </button>
+                      {comments && comments.length > 0 && (
+                        <div className="pe-2 mt-3">
+                          <p>
+                            {comments?.length}{" "}
+                            {comments.length > 1 ? "comments" : "comment"}
+                          </p>
                         </div>
                       )}
+                      <div className="dropdown">
+                        <FontAwesomeIcon
+                          icon={faEllipsisV}
+                          onClick={() => toggleDropdown(id)}
+                          style={{ cursor: "pointer" }}
+                          title="Click to copy title or description"
+                        />
+                        {dropdownVisible === id && (
+                          <div className="dropdown-menu show">
+                            <button
+                              className="dropdown-item"
+                              onClick={() => copyToClipboard(title, "title")}
+                            >
+                              Title
+                            </button>
+                            <button
+                              className="dropdown-item"
+                              onClick={() =>
+                                copyToClipboard(description, "description")
+                              }
+                            >
+                              Description
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )
+            );
+          }
         )
       )}
     </div>

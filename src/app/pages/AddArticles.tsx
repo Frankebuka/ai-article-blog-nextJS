@@ -47,6 +47,7 @@ const AddArticles: React.FC = () => {
   const db = getFirestore(app);
   const auth = getAuth(app);
   const [user] = useAuthState(auth);
+  const userId = user?.uid;
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -89,11 +90,20 @@ const AddArticles: React.FC = () => {
           console.log(err);
         },
         () => {
+          const formatText = (text: string): string => {
+            return text
+              .split("\n")
+              .map((paragraph: string) => `<p>${paragraph}</p>`)
+              .join("");
+          };
+
+          const formattedText = formatText(description);
+
           getDownloadURL(uploadImage.snapshot.ref).then((url) => {
             const articleRef = collection(db, "Articles");
             addDoc(articleRef, {
               title,
-              description,
+              description: formattedText,
               imageUrl: url,
               createdAt: Timestamp.now().toDate(),
               createdBy: user?.displayName || "Anonymous",
@@ -131,19 +141,36 @@ const AddArticles: React.FC = () => {
               headers: {
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ description }),
+              body: JSON.stringify({ description, askAI, userId }),
             }
           );
 
+          if (!res.ok) {
+            toast(
+              "5 max limit reached, please try again tomorrow. (Or do not use AI generator for today)",
+              {
+                type: "error",
+              }
+            );
+            throw new Error(
+              "Failed to generate article. (Too many requests, please try again tomorrow)"
+            );
+          }
           const data = await res.json();
+          const formatArticleText = (text: string): string => {
+            return text
+              .split("\n")
+              .map((paragraph: string) => `<p>${paragraph}</p>`)
+              .join("");
+          };
+
+          const formattedArticleText = formatArticleText(data.article);
 
           getDownloadURL(uploadImage.snapshot.ref).then((url) => {
             const articleRef = collection(db, "Articles");
             addDoc(articleRef, {
               title,
-              description: res.ok
-                ? data
-                : "Failed to generate article. (2 max limit reached, try again tomorrow)",
+              description: formattedArticleText,
               imageUrl: url,
               createdAt: Timestamp.now().toDate(),
               createdBy: user?.displayName || "Anonymous",
@@ -162,7 +189,6 @@ const AddArticles: React.FC = () => {
         }
       );
     }
-
     setFormData({
       title: "",
       description: "",
@@ -202,7 +228,7 @@ const AddArticles: React.FC = () => {
               type="text"
               name="askAI"
               className="form-control mt-2"
-              placeholder="e.g., summarize the description"
+              placeholder="e.g., summarise description"
               value={askAI}
               onChange={handleChange}
             />
